@@ -40,11 +40,18 @@ ${correo ? `📧 Correo: ${correo}\n` : ''}📆 Fecha: ${fecha} a las ${hora}
 🔌 Cliente Repsol: ${clienteRepsol}
 📝 Motivo: ${motivo}${motivo === "Otro" && detalle ? `\n🧾 Detalle: ${detalle}` : ''}`;
 
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: mensaje })
-    });
+    const chatIds = process.env.TELEGRAM_CHAT_ID.split(',');
+
+for (const chatId of chatIds) {
+  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId.trim(),
+      text: mensaje
+    })
+  });
+}
 
     // INSERTA EN SUPABASE
     const { error } = await supabase.from('reservas').insert([{
