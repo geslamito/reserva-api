@@ -1,4 +1,3 @@
-// pages/api/disponible.js
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -7,6 +6,14 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
+  res.setHeader("Access-Control-Allow-Origin", "https://www.grupogeslama.com");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Método no permitido' });
   }
@@ -19,9 +26,7 @@ export default async function handler(req, res) {
       .select('hora')
       .eq('fecha', fecha);
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     const horasReservadas = data.map(r => r.hora);
     return res.status(200).json({ success: true, horasReservadas });
