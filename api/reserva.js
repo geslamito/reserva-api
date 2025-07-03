@@ -1,16 +1,21 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
+
 export default async function handler(req, res) {
-  // Cabeceras CORS necesarias para permitir peticiones desde otro dominio
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Origin", "https://www.grupogeslama.com");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Manejar preflight (OPTIONS)
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ success: false, error: "Método no permitido" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, error: 'Método no permitido' });
   }
 
   try {
@@ -31,16 +36,29 @@ export default async function handler(req, res) {
     const mensaje = `📅 Nueva cita reservada:
 👤 Nombre: ${nombre}
 📞 Teléfono: ${telefono}
-${correo ? `📧 Correo: ${correo}\n` : ""}
-📆 Fecha: ${fecha} a las ${hora}
+${correo ? `📧 Correo: ${correo}\n` : ''}📆 Fecha: ${fecha} a las ${hora}
 🔌 Cliente Repsol: ${clienteRepsol}
-📝 Motivo: ${motivo}${motivo === "Otro" && detalle ? `\n🧾 Detalle: ${detalle}` : ""}`;
+📝 Motivo: ${motivo}${motivo === "Otro" && detalle ? `\n🧾 Detalle: ${detalle}` : ''}`;
 
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text: mensaje }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: mensaje })
     });
+
+    // INSERTA EN SUPABASE
+    const { error } = await supabase.from('reservas').insert([{
+      nombre,
+      telefono,
+      correo,
+      fecha,
+      hora,
+      clienteRepsol,
+      motivo,
+      detalle
+    }]);
+
+    if (error) throw error;
 
     return res.status(200).json({ success: true });
   } catch (error) {
